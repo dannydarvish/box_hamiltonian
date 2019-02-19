@@ -16,7 +16,7 @@ void FVSpectrumSolver::construct_hamiltonian(Mat<cdouble> & M)
     for (int nsq : momentum_ints)
         for (int alpha = 0; alpha < n_chan; alpha++)
         {
-            M(pos, pos) += sqrt(sqr(m_tp[alpha].first) + sqr(2 * M_PI / L) * nsq) +
+            M(pos, pos) += sqrt(sqr(m_tp[alpha].first)  + sqr(2 * M_PI / L) * nsq) +
                            sqrt(sqr(m_tp[alpha].second) + sqr(2 * M_PI / L) * nsq);
             pos++;
         }
@@ -32,7 +32,7 @@ void FVSpectrumSolver::construct_hamiltonian(Mat<cdouble> & M)
             for (int beta = 0; beta < n_chan; beta++)
             {
                 M(row, col) += sqrt(double(C3_map[nsq])/(4.0*M_PI)) * pow(2*M_PI/L,1.5) *
-                                g[i][beta](2*M_PI*sqrt(nsq)/L);
+                                (*g_ptr)(i, beta, 2*M_PI*sqrt(nsq)/L);
                 col++;
             }
         row++;
@@ -44,7 +44,7 @@ void FVSpectrumSolver::construct_hamiltonian(Mat<cdouble> & M)
             for (int j = 0; j < n_bare; j++)
             {
                 M(row, col) += conj(sqrt(double(C3_map[nsq])/(4.0*M_PI)) * pow(2*M_PI/L,1.5) *
-                                g[j][alpha](2*M_PI*sqrt(nsq)/L));
+                                (*g_ptr)(j, alpha, 2*M_PI*sqrt(nsq)/L));
                 col++;
             }
             for (int msq : momentum_ints)
@@ -52,7 +52,7 @@ void FVSpectrumSolver::construct_hamiltonian(Mat<cdouble> & M)
                 {
                     M(row, col) += sqrt(C3_map[nsq]/(4*M_PI))*sqrt(C3_map[msq]/(4*M_PI)) *
                                    pow(2*M_PI/L, 3.0) * 
-                                   v[alpha][beta](2*M_PI/L*sqrt(nsq), 2*M_PI/L*sqrt(msq));
+                                   (*v_ptr)(alpha, beta, 2*M_PI/L*sqrt(nsq), 2*M_PI/L*sqrt(msq));
                     col++;
                 }
             row++;
@@ -62,25 +62,13 @@ void FVSpectrumSolver::construct_hamiltonian(Mat<cdouble> & M)
     finished_calc = true;
 }
 
-const Mat<cdouble> & FVSpectrumSolver::get_hamiltonian()
+vector<double> FVSpectrumSolver::solve_spectrum()
 {
-    if (!finished_calc)
-        throw runtime_error("Must call get_spectrum before calling get_hamiltonian.");
-    else
-        return h;
-}
-
-const vector<double> & FVSpectrumSolver::get_spectrum()
-{
-    if (!finished_calc)
-    {
-        construct_hamiltonian(h);
-        assert(h.is_symmetric(1e-9*abs(h(0,0))));
-        vec eigval;
-        eig_sym(eigval, h);
-        spectrum = conv_to<vector<double> >::from(eigval);
-    }
-    return spectrum;
+    construct_hamiltonian(h);
+    assert(h.is_symmetric(1e-6*abs(h(0,0))));
+    vec eigval;
+    eig_sym(eigval, h);
+    return conv_to<vector<double> >::from(eigval);
 }
 
 int FVSpectrumSolver::C3(int nsq)
@@ -98,4 +86,14 @@ void FVSpectrumSolver::set_L(double L)
 {
     finished_calc = false;
     this->L = L;
+}
+
+void FVSpectrumSolver::set_g_ptr(const gBase * g_ptr)
+{
+    this->g_ptr = g_ptr;
+}
+
+void FVSpectrumSolver::set_v_ptr(const vBase * v_ptr)
+{
+    this->v_ptr = v_ptr;
 }

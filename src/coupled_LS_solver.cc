@@ -179,8 +179,6 @@ cvec kernel_moment(double b, double m1, double m2, cdouble E_plus_iep)
          Power(a,2)*(-Power(b,4) + Power(w,4) + 
             4*Power(b,2)*(Power(w,2) - Power(x,2) + 
                Sqrt(Power(a,2) + Power(x,2))*Sqrt(Power(b,2) + Power(x,2))))))/(16.*Power(w,3));
-
-        
 }
 
 cvec kernel_moment(double b, double msq, cdouble E_plus_iep)
